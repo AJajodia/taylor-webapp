@@ -1,0 +1,73 @@
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'hide')
+library(tidyverse)
+library(janitor)
+library(plotly)
+# library(taylor)
+
+# install.packages("remotes")
+# remotes::install_github("wjakethompson/taylor")
+
+load("taylor_all_songs.rda")
+
+# install.packages("tidytuesdayR")
+# 
+tuesdata <- tidytuesdayR::tt_load('2023-10-17')
+
+# taylor_album_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-10-17/taylor_album_songs.csv')
+# taylor_all_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-10-17/taylor_all_songs.csv')
+# taylor_albums <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-10-17/taylor_albums.csv')
+
+# taylor_album_songs <- tuesdata$taylor_album_songs
+# taylor_all_songs <- tuesdata$taylor_all_songs
+# taylor_albums <- tuesdata$taylor_albums
+```
+
+```{r wrangling}
+taylor_album_focus <- taylor_all_songs %>%
+  # full_join(taylor_albums, by = c("album_name", "ep", "album_release")) %>%
+  filter(!(is.na(album_name))) %>%
+  filter(!(album_name %in% c("The Taylor Swift Holiday Collection", "Beautiful Eyes"))) %>%
+  mutate(album_name = as.character(album_name)) %>%
+  group_by(album_name) %>%
+  mutate(album_length_min = sum(duration_ms, na.rm = T)/60000,
+         album_danceability = sum(danceability, na.rm = T)/max(track_number),
+         album_energy = sum(energy, na.rm = T)/max(track_number),
+         album_loudness = sum(loudness, na.rm = T)/max(track_number),
+         album_speechiness = sum(speechiness, na.rm = T)/max(track_number),
+         album_acousticness = sum(acousticness, na.rm = T)/max(track_number),
+         album_instrumentalness = sum(instrumentalness, na.rm = T)/max(track_number),
+         album_liveness = sum(liveness, na.rm = T)/max(track_number),
+         album_valence = sum(valence, na.rm = T)/max(track_number),
+         album_tempo = sum(tempo, na.rm = T)/max(track_number),
+         album_track_number = max(track_number),
+         # album_metacritic_score = metacritic_score,
+         # album_user_score = user_score
+         # album_mode = (count(mode_name, na.rm = T) %>% slice_max(n, n=1))[[2]]
+         ) %>%
+    ungroup()
+
+# (taylor_album_focus %>% group_by(album_name) %>% count(mode_name) %>% slice_max(n, n=1))[[2]]
+  
+
+# for (col in c(taylor_album_focus$danceability, taylor_album_focus$energy, taylor_album_focus$loudness, taylor_album_focus$speechiness, taylor_album_focus$acousticness, taylor_album_focus$instrumentalness, taylor_album_focus$liveness, taylor_album_focus$valence, taylor_album_focus$tempo)){
+#   taylor_album_focus <- taylor_album_focus %>%
+#     group_by(album_name) %>%
+#     mutate(album_col = sum(col, na.rm = T)/max(track_number))
+# }
+```
+
+
+```{r}
+all_album_palette <- c("lightseagreen", "darkgoldenrod1", "mediumorchid", "red", "cornflowerblue", "black", "hotpink",  "ivory4", "darkorange3", "darkgoldenrod3" ,"red3","navyblue")
+
+
+taylor_album_focus %>%
+  ggplot() +
+  geom_point(aes(x=album_release, y=album_metacritic_score, color = fct_reorder(album_name, album_release)), size = 3) +
+  scale_color_manual(values = all_album_palette) +
+  labs(color = "Album",
+       y = "Metacritic Score")
+```
+
