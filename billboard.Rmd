@@ -1,0 +1,50 @@
+### Setup
+
+```{r}
+library(tidyverse)
+library(rvest)
+library(robotstxt)
+```
+
+### Scraping Taylor's Top 100
+
+```{r}
+paths_allowed("https://www.billboard.com/artist/taylor-swift/chart-history/hsi/")
+page <- read_html("https://www.billboard.com/artist/taylor-swift/chart-history/hsi/")
+
+name <- page %>%
+  html_elements(".a-truncate-ellipsis") %>%
+  html_text2()
+
+dates <- page %>%
+  html_elements(".c-label__link") %>%
+  html_text2()
+
+peak_pos <- page %>%
+  html_elements(".artist-chart-row-peak-pos") %>%
+  html_text2()
+
+weeks_charting <- page %>%
+  html_elements(".artist-chart-row-week-on-chart") %>%
+  html_text2()
+
+debut_date <- rep(NA, 212)
+peak_date <- rep(NA, 212)
+
+for (i in 1:212) {
+  debut_date[i] = dates[(i*2)-1]
+  peak_date[i] = dates[i*2]
+}
+
+billboard_data <- tibble(
+  name = name,
+  peak_pos = peak_pos,
+  debut_date = debut_date,
+  peak_date = peak_date,
+  weeks_charting = weeks_charting
+)
+
+write.csv(billboard_data, "billboard.csv")
+```
+
+### Scraping Taylor's Top 200
