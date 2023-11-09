@@ -9,7 +9,6 @@ library(robotstxt)
 ### Scraping Taylor's Top 100
 
 ```{r}
-paths_allowed("https://www.billboard.com/artist/taylor-swift/chart-history/hsi/")
 page <- read_html("https://www.billboard.com/artist/taylor-swift/chart-history/hsi/")
 
 name <- page %>%
@@ -28,8 +27,8 @@ weeks_charting <- page %>%
   html_elements(".artist-chart-row-week-on-chart") %>%
   html_text2()
 
-debut_date <- rep(NA, 212)
-peak_date <- rep(NA, 212)
+debut_date <- rep(NA, 231)
+peak_date <- rep(NA, 231)
 
 for (i in 1:212) {
   debut_date[i] = dates[(i*2)-1]
@@ -44,7 +43,13 @@ billboard_data <- tibble(
   weeks_charting = weeks_charting
 )
 
-write.csv(billboard_data, "billboard.csv")
+write.csv(billboard_albums, "billboard_albums.csv")
 ```
 
 ### Scraping Taylor's Top 200
+
+```{r}
+billboard_albums <- readr:read.csv("billboard_albums.csv")
+billboard_albums <- as_tibble(billboard_albums) %>% filter(!is.na(peak_pos)) %>%
+  mutate(X.1 = NULL, X = NULL, X.2 = NULL, X.3 = NULL)
+```
