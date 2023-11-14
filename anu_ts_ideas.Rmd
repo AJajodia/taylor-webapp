@@ -1,0 +1,54 @@
+
+```{r}
+library(tidyverse)
+library(shiny)
+library(fmsb)
+
+
+```
+
+```{r}
+taylor_albums_summaries <- taylor_album_focus %>%
+  group_by(album_name) %>% summarize(
+    danceability = mean(danceability, na.rm = TRUE),
+    energy = mean(energy, na.rm = TRUE),
+    speechiness = mean(speechiness, na.rm = TRUE),
+    acousticness = mean(acousticness, na.rm = TRUE),
+    liveness = mean(liveness, na.rm = TRUE),
+    valence = mean(danceability, na.rm = TRUE)
+  )
+```
+
+```{r}
+ui <- fluidPage(
+  column(
+    selectInput(inputId = "album1", "First Album", taylor_albums_summaries$album_name),
+    imageOutput("leftalbum"),
+    width = 4
+  ),
+  column(
+    plotOutput("plot"), width = 4
+  )
+)
+
+server <- function(input, output) {
+  filename <- reactive(
+    normalizePath(file.path("/Users/anu/Documents/STAT220/Assignments/final-project-9/album_thumbnails/", paste(str_replace_all(str_replace_all(str_replace_all(input$album1,"\\s","_"), "\\(", ""), "\\)", ""), ".jpg", sep="")))
+    )
+  filtered_taylor_albums_summaries <- reactive(
+    as.data.frame(taylor_albums_summaries %>% filter(album_name == input$album1))
+  )
+  
+  output$leftalbum <- renderImage({
+      list(src = filename())
+    }, deleteFile = FALSE)
+  output$plot <- renderPlot({
+    radarchart(
+      df = filtered_taylor_albums_summaries
+            )
+  })
+}
+  
+shinyApp(ui, server)
+```
+
