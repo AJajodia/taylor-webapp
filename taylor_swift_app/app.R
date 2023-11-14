@@ -12,12 +12,23 @@ library(tidyverse)
 library(plotly)
 
 ### data sets
-taylor_album_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-10-17/taylor_album_songs.csv')
-taylor_all_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-10-17/taylor_all_songs.csv')
-taylor_albums <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-10-17/taylor_albums.csv')
+
+load("taylor_all_songs.rda")
+load("taylor_albums.rda")
+load("taylor_album_songs.rda")
+
+billboard_albums <- read_csv(
+  "/Users/mariahloehr/Stat220/Assignments/final_project/billboard_albums.csv")
+
+billboard_albums[8,2] <- "folklore"
+billboard_albums[9,2] <- "evermore"
+
+billboard_songs <- read_csv(
+  "/Users/mariahloehr/Stat220/Assignments/final_project/billboard_songs.csv")
 
 taylor_album_focus <- taylor_all_songs %>%
-  # full_join(taylor_albums, by = c("album_name", "ep", "album_release")) %>%
+  full_join(taylor_albums, by = c("album_name", "ep", "album_release")) %>%
+  inner_join(billboard_albums, by = "album_name") %>%
   filter(!(is.na(album_name))) %>%
   filter(!(album_name %in% c("The Taylor Swift Holiday Collection", "Beautiful Eyes"))) %>%
   mutate(album_name = as.character(album_name)) %>%
@@ -33,18 +44,24 @@ taylor_album_focus <- taylor_all_songs %>%
          album_valence = sum(valence, na.rm = T)/max(track_number),
          album_tempo = sum(tempo, na.rm = T)/max(track_number),
          album_track_number = max(track_number),
-         # album_metacritic_score = metacritic_score,
-         # album_user_score = user_score
+         album_metacritic_score = metacritic_score,
+         album_user_score = user_score,
+         album_peak_pos = peak_pos,
+         album_weeks_charting = weeks_charting
   ) %>%
   ungroup()
 
+
+
 all_album_palette <- c("lightseagreen", "darkgoldenrod1", "mediumorchid", 
-                       "red", "cornflowerblue", "black", "hotpink",  "ivory4", 
-                       "darkorange3", "darkgoldenrod3" ,"red3","navyblue")
+                       "red", "lightskyblue", "black", "hotpink",  "ivory4",
+                       "darkorange3", "darkgoldenrod3" ,"red3","navyblue", 
+                       "mediumorchid4", "deepskyblue")
 
 all_songs_palette <- c("lightseagreen", "forestgreen", "darkorange","darkgoldenrod1", "mediumorchid", 
                        "red", "cornflowerblue", "black", "hotpink",  "ivory4", 
-                       "darkorange3", "darkgoldenrod3" ,"red3","navyblue", "gray99")
+                       "darkorange3", "darkgoldenrod3" ,"red3","navyblue", 
+                       "mediumorchid4", "deepskyblue", "gray99")
 ###
 
 
@@ -59,37 +76,33 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     tabsetPanel(
         tabPanel("Album Analysis",
-                 fluidRow(
-                   column(3, 
-                          selectInput("album_xaxis",
+                          inputPanel(selectInput("album_xaxis",
                                       "X Variable",
                                       choices = colnames(album_vars)),
+                                      # choiceNames = str_sub(colname(album_vars)),
                           selectInput("album_yaxis", 
                                       "Y Variable",
                                       choices = colnames(album_vars),
-                                      selected = colnames(album_vars)[2])
-                          ),
-                   column(9, plotOutput("albumPlot")
-                          ))
+                                      selected = colnames(album_vars)[2]),
+                          checkboxGroupInput("include_albums",
+                                      "Albums",
+                                      choices = album_vars$album_name)),
+                   plotOutput("albumPlot")
                  ),
         tabPanel("Song Analysis",
-                 fluidRow(
-                   column(3,
-                          selectInput("song_xaxis",
+                          inputPanel(selectInput("song_xaxis",
                                       "X Variable",
                                       choices = colnames(taylor_all_songs)),
                           selectInput("song_yaxis", 
                                       "Y Variable",
                                       choices = colnames(taylor_all_songs),
-                                      selected = colnames(taylor_all_songs)[2])
-                          ),
-                   column(8, plotOutput("songPlot")
-                   )
+                                      selected = colnames(taylor_all_songs)[2])),
+                   plotOutput("songPlot")
                  )
           
             )
         )
-)
+
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -98,9 +111,10 @@ server <- function(input, output) {
     output$albumPlot <- renderPlot({
       taylor_album_focus %>%
         ggplot(aes_string(x=input$album_xaxis, y=input$album_yaxis)) +
-        geom_point(aes(color = fct_reorder(album_name, album_release)), size = 5) +
+        geom_point(aes(color = fct_reorder(album_name, album_release)), size = 7) +
         scale_color_manual(values = all_album_palette) +
-        labs(color = "Album")
+        labs(color = "Album") +
+        theme_bw()
     })
     
     output$songPlot <- renderPlot({
@@ -108,7 +122,8 @@ server <- function(input, output) {
         ggplot(aes_string(x=input$song_xaxis, y=input$song_yaxis)) +
         geom_point(aes(color = fct_reorder(album_name, album_release))) +
         scale_color_manual(values = all_songs_palette) +
-        labs(color = "Album")
+        labs(color = "Album") +
+        theme_bw()
     })
 }
 

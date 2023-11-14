@@ -10,10 +10,22 @@ library(plotly)
 # remotes::install_github("wjakethompson/taylor")
 
 load("taylor_all_songs.rda")
+load("taylor_albums.rda")
+load("taylor_album_songs.rda")
+
+billboard_albums <- read_csv(
+  "/Users/mariahloehr/Stat220/Assignments/final_project/billboard_albums.csv")
+
+billboard_albums[8,2] <- "folklore"
+billboard_albums[9,2] <- "evermore"
+
+billboard_songs <- read_csv(
+  "/Users/mariahloehr/Stat220/Assignments/final_project/billboard_songs.csv")
+
 
 # install.packages("tidytuesdayR")
 # 
-tuesdata <- tidytuesdayR::tt_load('2023-10-17')
+# tuesdata <- tidytuesdayR::tt_load('2023-10-17')
 
 # taylor_album_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-10-17/taylor_album_songs.csv')
 # taylor_all_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-10-17/taylor_all_songs.csv')
@@ -26,7 +38,8 @@ tuesdata <- tidytuesdayR::tt_load('2023-10-17')
 
 ```{r wrangling}
 taylor_album_focus <- taylor_all_songs %>%
-  # full_join(taylor_albums, by = c("album_name", "ep", "album_release")) %>%
+  full_join(taylor_albums, by = c("album_name", "ep", "album_release")) %>%
+  inner_join(billboard_albums, by = "album_name") %>%
   filter(!(is.na(album_name))) %>%
   filter(!(album_name %in% c("The Taylor Swift Holiday Collection", "Beautiful Eyes"))) %>%
   mutate(album_name = as.character(album_name)) %>%
@@ -42,32 +55,31 @@ taylor_album_focus <- taylor_all_songs %>%
          album_valence = sum(valence, na.rm = T)/max(track_number),
          album_tempo = sum(tempo, na.rm = T)/max(track_number),
          album_track_number = max(track_number),
-         # album_metacritic_score = metacritic_score,
-         # album_user_score = user_score
-         # album_mode = (count(mode_name, na.rm = T) %>% slice_max(n, n=1))[[2]]
+         album_metacritic_score = metacritic_score,
+         album_user_score = user_score,
+         album_peak_pos = peak_pos,
+         album_weeks_charting = weeks_charting
          ) %>%
     ungroup()
 
 # (taylor_album_focus %>% group_by(album_name) %>% count(mode_name) %>% slice_max(n, n=1))[[2]]
-  
+```
 
-# for (col in c(taylor_album_focus$danceability, taylor_album_focus$energy, taylor_album_focus$loudness, taylor_album_focus$speechiness, taylor_album_focus$acousticness, taylor_album_focus$instrumentalness, taylor_album_focus$liveness, taylor_album_focus$valence, taylor_album_focus$tempo)){
-#   taylor_album_focus <- taylor_album_focus %>%
-#     group_by(album_name) %>%
-#     mutate(album_col = sum(col, na.rm = T)/max(track_number))
-# }
+```{r song_focus}
+
 ```
 
 
+
 ```{r}
-all_album_palette <- c("lightseagreen", "darkgoldenrod1", "mediumorchid", "red", "cornflowerblue", "black", "hotpink",  "ivory4", "darkorange3", "darkgoldenrod3" ,"red3","navyblue")
+all_album_palette <- c("lightseagreen", "darkgoldenrod1", "mediumorchid", "red", "lightskyblue", "black", "hotpink",  "ivory4", "darkorange3", "darkgoldenrod3" ,"red3","navyblue", "mediumorchid4", "deepskyblue")
 
 
 taylor_album_focus %>%
   ggplot() +
-  geom_point(aes(x=album_release, y=album_metacritic_score, color = fct_reorder(album_name, album_release)), size = 3) +
+  geom_point(aes(x=album_release, y=album_user_score, color = fct_reorder(album_name, album_release)), size = 3) +
   scale_color_manual(values = all_album_palette) +
   labs(color = "Album",
-       y = "Metacritic Score")
+       y = "User Score")
 ```
 
