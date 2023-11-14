@@ -52,6 +52,14 @@ taylor_album_focus <- taylor_all_songs %>%
   ungroup()
 
 
+taylor_song_focus <- taylor_all_songs %>%
+  # full_join(billboard_songs, by = c("track_name" = "name")) %>%
+  select(c(1,3:5, 11:29)) %>%
+  mutate(duration_ms = duration_ms/60000)
+
+colnames(taylor_song_focus)[17] <- 'duration_min'
+
+
 
 all_album_palette <- c("lightseagreen", "darkgoldenrod1", "mediumorchid", 
                        "red", "lightskyblue", "black", "hotpink",  "ivory4",
@@ -66,12 +74,28 @@ all_songs_palette <- c("lightseagreen", "forestgreen", "darkorange","darkgoldenr
 
 
 album_vars <- taylor_album_focus %>% select(starts_with("album_"), -c(album_name))
+song_vars <- taylor_song_focus %>% select(-c( 22))
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
     # Application title
-    titlePanel("Taylor Swift"),
+    titlePanel(tagList("Taylor Swift",
+                       img(src = "Taylor_Swift.jpg", width = "40px", height = "40px"),
+                       img(src = "Fearless.jpg", width = "40px", height = "40px"),
+                       img(src = "Speak_Now.jpg", width = "40px", height = "40px"),
+                       img(src = "Red.jpg", width = "40px", height = "40px"),
+                       img(src = "1989.jpg", width = "40px", height = "40px"),
+                       img(src = "reputation.jpg", width = "40px", height = "40px"),
+                       img(src = "Lover.jpg", width = "40px", height = "40px"),
+                       img(src = "folklore.jpg", width = "40px", height = "40px"),
+                       img(src = "evermore.jpg", width = "40px", height = "40px"),
+                       img(src = "Fearless_Taylor's_Version.jpg", width = "40px", height = "40px"),
+                       img(src = "Red_Taylor's_Version.jpg", width = "40px", height = "40px"),
+                       img(src = "Midnights.jpg", width = "40px", height = "40px"),
+                       img(src = "Speak_Now_Taylor's_Version.jpg", width = "40px", height = "40px"),
+                       img(src = "1989_Taylor's_Version.jpg", width = "40px", height = "40px")
+                       )),
 
     # Sidebar with a slider input for number of bins 
     tabsetPanel(
@@ -92,11 +116,11 @@ ui <- fluidPage(
         tabPanel("Song Analysis",
                           inputPanel(selectInput("song_xaxis",
                                       "X Variable",
-                                      choices = colnames(taylor_all_songs)),
+                                      choices = colnames(song_vars)),
                           selectInput("song_yaxis", 
                                       "Y Variable",
-                                      choices = colnames(taylor_all_songs),
-                                      selected = colnames(taylor_all_songs)[2])),
+                                      choices = colnames(song_vars),
+                                      selected = colnames(song_vars)[2])),
                    plotOutput("songPlot")
                  )
           
@@ -118,7 +142,7 @@ server <- function(input, output) {
     })
     
     output$songPlot <- renderPlot({
-      taylor_all_songs %>%
+      taylor_song_focus %>%
         ggplot(aes_string(x=input$song_xaxis, y=input$song_yaxis)) +
         geom_point(aes(color = fct_reorder(album_name, album_release))) +
         scale_color_manual(values = all_songs_palette) +
