@@ -59,9 +59,16 @@ taylor_album_focus <- taylor_all_songs %>%
          album_metacritic_score = metacritic_score,
          album_user_score = user_score,
          album_peak_pos = peak_pos,
-         album_weeks_charting = weeks_charting
+         album_weeks_charting = weeks_charting,
+         album_explicit = sum(explicit == "TRUE")
          ) %>%
     ungroup()
+
+sum(taylor_all_songs$explicit == "TRUE")
+
+as.integer(as.logical(taylor_all_songs$explicit))
+
+((taylor_all_songs %>% count(explicit)) %>% filter(explicit == "TRUE"))[[2]]
 
 # (taylor_album_focus %>% group_by(album_name) %>% count(mode_name) %>% slice_max(n, n=1))[[2]]
 ```
@@ -128,8 +135,20 @@ ts_colors <- function(x) {
 }
 
 ts_colors(unique(taylor_album_focus$album_name))
-
-taylor_album_focus %>% 
-  filter(!str_detect(album_name, "Taylor's Version"))
 ```
+
+```{r explicit analysis}
+taylor_all_songs %>% ungroup() %>%
+  # unnest words into rows
+  unnest_tokens(output = text, input = text, drop = F) %>%
+  # mutates: make lowercase, remove text column, create new year column after
+  # lubridate functions are applied
+  mutate(word = str_to_lower(text), text = NULL,
+         year = year(mdy(date)), date = NULL) %>%
+  # remove stop words with anti-join, group by year and word, then count, remove
+  # redundant rows
+  anti_join(stop_words) %>% group_by(year, word) %>% mutate(count = n()) %>%
+  distinct()
+```
+
 
