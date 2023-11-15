@@ -70,17 +70,20 @@ taylor_albums_summaries <- taylor_album_focus %>%
     valence = mean(danceability, na.rm = TRUE)
   ) %>% pivot_longer(danceability:valence, names_to = "variable_name", values_to = "value")
 
+taylor_palette <- c("Taylor Swift" ="lightseagreen","The Taylor Swift Holiday Collection"="forestgreen", 
+                    "Beautiful Eyes" ="darkorange", "Fearless" ="darkgoldenrod1",
+                    "Speak Now" ="mediumorchid", "Red" ="red", 
+                    "1989" ="cornflowerblue", "reputation" ="black", 
+                    "Lover" ="hotpink", "folklore" ="ivory4",
+                    "evermore" ="darkorange3","Fearless (Taylor's Version)"="darkgoldenrod3",
+                    "Red (Taylor's Version)" ="red3", "Midnights" ="navyblue",
+                    "Speak Now (Taylor's Version)" ="mediumorchid4",
+                    "1989 (Taylor's Version)" ="deepskyblue", "NA"="gray99")
 
-
-all_album_palette <- c("lightseagreen", "darkgoldenrod1", "mediumorchid", 
-                       "red", "lightskyblue", "black", "hotpink",  "ivory4",
-                       "darkorange3", "darkgoldenrod3" ,"red3","navyblue", 
-                       "mediumorchid4", "deepskyblue")
-
-all_songs_palette <- c("lightseagreen", "forestgreen", "darkorange","darkgoldenrod1", "mediumorchid", 
-                       "red", "cornflowerblue", "black", "hotpink",  "ivory4", 
-                       "darkorange3", "darkgoldenrod3" ,"red3","navyblue", 
-                       "mediumorchid4", "deepskyblue", "gray99")
+ts_colors <- function(x) {
+  cols <- c(x)
+  taylor_palette[cols]
+}
 ###
 
 
@@ -161,7 +164,7 @@ server <- function(input, output) {
       taylor_album_focus %>%
         ggplot(aes_string(x=input$album_xaxis, y=input$album_yaxis)) +
         geom_point(aes(color = fct_reorder(album_name, album_release)), size = 7) +
-        scale_color_manual(values = all_album_palette) +
+        scale_color_manual(values = ts_colors(unique(taylor_album_focus$album_name))) +
         labs(color = "Album") +
         theme_bw()
     })
@@ -170,7 +173,7 @@ server <- function(input, output) {
       taylor_song_focus %>%
         ggplot(aes_string(x=input$song_xaxis, y=input$song_yaxis)) +
         geom_point(aes(color = fct_reorder(album_name, album_release))) +
-        scale_color_manual(values = all_songs_palette) +
+        scale_color_manual(values = ts_colors(unique(taylor_song_focus$album_name))) +
         labs(color = "Album") +
         theme_bw()
     })
@@ -202,8 +205,11 @@ server <- function(input, output) {
     }, deleteFile = FALSE)
     
     output$barPlot <- renderPlot({
-      ggplot(filtered_taylor_albums_summaries(), aes(fill=album_name, y=value, x=variable_name)) + 
+      ggplot(filtered_taylor_albums_summaries(), 
+             aes(fill=album_name, y=value, x=variable_name)) + 
         geom_bar(position="dodge", stat="identity") +
+        labs(fill = "Album") +
+        scale_fill_manual(values = ts_colors(unique(filtered_taylor_albums_summaries()$album_name))) +
         theme_bw()
     })
 }

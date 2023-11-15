@@ -77,7 +77,20 @@ colnames(taylor_song_focus)[18] <- 'duration_min'
 
 
 ```{r}
-all_album_palette <- c("lightseagreen", "darkgoldenrod1", "mediumorchid", "red", "lightskyblue", "black", "hotpink",  "ivory4", "darkorange3", "darkgoldenrod3" ,"red3","navyblue", "mediumorchid4", "deepskyblue")
+all_album_palette <- c("lightseagreen", 
+                       "darkgoldenrod1", 
+                       "mediumorchid", 
+                       "red", 
+                       "lightskyblue", 
+                       "black", 
+                       "hotpink",  
+                       "ivory4", 
+                       "darkorange3", 
+                       "darkgoldenrod3" ,
+                       "red3",
+                       "navyblue",
+                       "mediumorchid4", 
+                       "deepskyblue")
 
 
 taylor_album_focus %>%
@@ -93,5 +106,26 @@ album1 <- "1989 (Taylor's Version)"
 
 paste(str_replace_all(str_replace_all(str_replace_all(album1,"\\s","_"),
                                                       "\\(", ""), "\\)", ""), ".jpg", sep="")
+```
+
+```{r color palette}
+taylor_palette <- c("Taylor Swift" ="lightseagreen","The Taylor Swift Holiday Collection"="forestgreen", 
+  "Beautiful Eyes" ="darkorange", "Fearless" ="darkgoldenrod1",
+  "Speak Now" ="mediumorchid", "Red" ="red", 
+  "1989" ="cornflowerblue", "reputation" ="black", 
+  "Lover" ="hotpink", "folklore" ="ivory4",
+  "evermore" ="darkorange3","Fearless (Taylor's Version)"="darkgoldenrod3",
+  "Red (Taylor's Version)" ="red3", "Midnights" ="navyblue",
+  "Speak Now (Taylor's Version)" ="mediumorchid4",
+  "1989 (Taylor's Version)" ="deepskyblue", "NA"="gray99")
+
+ts_colors <- function(x) {
+  cols <- c(x)
+  if (is.null(cols)){
+  return (taylor_palette)}
+  taylor_palette[cols]
+}
+
+ts_colors(unique(taylor_album_focus$album_name))
 ```
 
