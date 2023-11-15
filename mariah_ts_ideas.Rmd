@@ -4,6 +4,7 @@ knitr::opts_chunk$set(echo = TRUE, results = 'hide')
 library(tidyverse)
 library(janitor)
 library(plotly)
+library(RCurl)
 # library(taylor)
 
 # install.packages("remotes")
@@ -67,7 +68,7 @@ taylor_album_focus <- taylor_all_songs %>%
 
 ```{r song_focus}
 taylor_song_focus <- taylor_all_songs %>%
-  # full_join(billboard_songs, by = c("track_name" = "name")) %>%
+  full_join(billboard_songs, by = c("track_name" = "name")) %>%
   select(c(1,3:5, 11:29)) %>%
   mutate(duration_ms = duration_ms/60000)
 

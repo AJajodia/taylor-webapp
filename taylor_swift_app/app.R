@@ -17,14 +17,12 @@ load("taylor_all_songs.rda")
 load("taylor_albums.rda")
 load("taylor_album_songs.rda")
 
-billboard_albums <- read_csv(
-  "/Users/mariahloehr/Stat220/Assignments/final_project/billboard_albums.csv")
+billboard_albums <- read_csv("billboard_albums.csv")
 
 billboard_albums[8,2] <- "folklore"
 billboard_albums[9,2] <- "evermore"
 
-billboard_songs <- read_csv(
-  "/Users/mariahloehr/Stat220/Assignments/final_project/billboard_songs.csv")
+billboard_songs <- read_csv("billboard_songs.csv")
 
 taylor_album_focus <- taylor_all_songs %>%
   full_join(taylor_albums, by = c("album_name", "ep", "album_release")) %>%
@@ -124,7 +122,8 @@ ui <- fluidPage(
                                       selected = colnames(album_vars)[2]),
                           checkboxGroupInput("include_albums",
                                       "Albums",
-                                      choices = album_vars$album_name)),
+                                      choices = album_vars$album_name),
+                          checkboxInput("exclude_tvs", "Exclude Taylor's Versions")),
                    plotOutput("albumPlot")
                  ),
         tabPanel("Song Analysis",
