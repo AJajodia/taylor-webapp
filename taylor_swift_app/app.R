@@ -120,9 +120,11 @@ ui <- fluidPage(
                                       "Y Variable",
                                       choices = colnames(album_vars),
                                       selected = colnames(album_vars)[2]),
-                          checkboxGroupInput("include_albums",
+                          selectInput("include_albums",
                                       "Albums",
-                                      choices = album_vars$album_name),
+                                      choices = unique(album_vars$album_name),
+                                      multiple = T), 
+                                      # selected = colnames(album_vars[2])),
                           checkboxInput("exclude_tvs", "Exclude Taylor's Versions")),
                    plotOutput("albumPlot")
                  ),
