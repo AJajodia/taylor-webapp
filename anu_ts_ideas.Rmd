@@ -2,7 +2,7 @@
 ```{r}
 library(tidyverse)
 library(shiny)
-library(fmsb)
+
 
 
 ```
@@ -16,36 +16,46 @@ taylor_albums_summaries <- taylor_album_focus %>%
     acousticness = mean(acousticness, na.rm = TRUE),
     liveness = mean(liveness, na.rm = TRUE),
     valence = mean(danceability, na.rm = TRUE)
-  )
+  ) %>% pivot_longer(danceability:valence, names_to = "variable_name", values_to = "value")
+
 ```
 
 ```{r}
-ui <- fluidPage(
-  column(
-    selectInput(inputId = "album1", "First Album", taylor_albums_summaries$album_name),
-    imageOutput("leftalbum"),
-    width = 4
-  ),
-  column(
-    plotOutput("plot"), width = 4
-  )
+ui <- splitLayout(
+      column(2, 
+             selectInput(inputId = "album1", "First Album", taylor_albums_summaries$album_name),
+             imageOutput("leftalbum")
+             ),
+      column(8, plotOutput("plot")),
+      column(2, selectInput(inputId = "album2", "Second Album", taylor_albums_summaries$album_name),
+      imageOutput("rightalbum")
+    )
 )
 
 server <- function(input, output) {
-  filename <- reactive(
+  filename1 <- reactive(
     normalizePath(file.path("/Users/anu/Documents/STAT220/Assignments/final-project-9/album_thumbnails/", paste(str_replace_all(str_replace_all(str_replace_all(input$album1,"\\s","_"), "\\(", ""), "\\)", ""), ".jpg", sep="")))
     )
+  
+  filename2 <- reactive(
+    normalizePath(file.path("/Users/anu/Documents/STAT220/Assignments/final-project-9/album_thumbnails/", paste(str_replace_all(str_replace_all(str_replace_all(input$album2,"\\s","_"), "\\(", ""), "\\)", ""), ".jpg", sep="")))
+    )
+  
   filtered_taylor_albums_summaries <- reactive(
-    as.data.frame(taylor_albums_summaries %>% filter(album_name == input$album1))
+    taylor_albums_summaries %>% filter(album_name == input$album1 | album_name == input$album2)
   )
   
   output$leftalbum <- renderImage({
-      list(src = filename())
+      list(src = filename1())
     }, deleteFile = FALSE)
+  
+  output$rightalbum <- renderImage({
+      list(src = filename2())
+    }, deleteFile = FALSE)
+  
   output$plot <- renderPlot({
-    radarchart(
-      df = filtered_taylor_albums_summaries
-            )
+    ggplot(filtered_taylor_albums_summaries(), aes(fill=album_name, y=value, x=variable_name)) + 
+      geom_bar(position="dodge", stat="identity")
   })
 }
   
