@@ -34,15 +34,15 @@ taylor_album_focus <- taylor_all_songs %>%
   mutate(album_name = as.character(album_name)) %>%
   group_by(album_name) %>%
   mutate(album_duration = sum(duration_ms, na.rm = T)/60000,
-         album_danceability = sum(danceability, na.rm = T)/max(track_number),
-         album_energy = sum(energy, na.rm = T)/max(track_number),
-         album_loudness = sum(loudness, na.rm = T)/max(track_number),
-         album_speechiness = sum(speechiness, na.rm = T)/max(track_number),
-         album_acousticness = sum(acousticness, na.rm = T)/max(track_number),
-         album_instrumentalness = sum(instrumentalness, na.rm = T)/max(track_number),
-         album_liveness = sum(liveness, na.rm = T)/max(track_number),
-         album_valence = sum(valence, na.rm = T)/max(track_number),
-         album_tempo = sum(tempo, na.rm = T)/max(track_number),
+         album_danceability = mean(danceability, na.rm = T),
+         album_energy = mean(energy, na.rm = T),
+         album_loudness = mean(loudness, na.rm = T),
+         album_speechiness = mean(speechiness, na.rm = T),
+         album_acousticness = mean(acousticness, na.rm = T),
+         album_instrumentalness = mean(instrumentalness, na.rm = T),
+         album_liveness = mean(liveness, na.rm = T),
+         album_valence = mean(valence, na.rm = T),
+         album_tempo = mean(tempo, na.rm = T),
          album_track_number = max(track_number),
          album_metacritic_score = metacritic_score,
          album_user_score = user_score,
@@ -57,7 +57,18 @@ taylor_song_focus <- taylor_all_songs %>%
   select(c(1,3:5, 11:29)) %>%
   mutate(duration_ms = duration_ms/60000)
 
-colnames(taylor_song_focus)[17] <- 'duration_min'
+colnames(taylor_song_focus)[18] <- 'duration_min'
+
+
+taylor_albums_summaries <- taylor_album_focus %>%
+  group_by(album_name) %>% summarize(
+    danceability = mean(danceability, na.rm = TRUE),
+    energy = mean(energy, na.rm = TRUE),
+    speechiness = mean(speechiness, na.rm = TRUE),
+    acousticness = mean(acousticness, na.rm = TRUE),
+    liveness = mean(liveness, na.rm = TRUE),
+    valence = mean(danceability, na.rm = TRUE)
+  ) %>% pivot_longer(danceability:valence, names_to = "variable_name", values_to = "value")
 
 
 
@@ -74,7 +85,7 @@ all_songs_palette <- c("lightseagreen", "forestgreen", "darkorange","darkgoldenr
 
 
 album_vars <- taylor_album_focus %>% select(starts_with("album_"), -c(album_name))
-song_vars <- taylor_song_focus %>% select(-c( 22))
+song_vars <- taylor_song_focus %>% select(-c(23))
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -122,7 +133,21 @@ ui <- fluidPage(
                                       choices = colnames(song_vars),
                                       selected = colnames(song_vars)[2])),
                    plotOutput("songPlot")
+                 ),
+        tabPanel("Two Album Comparison",
+                 fluidRow(
+                   column(2, 
+                          selectInput(inputId = "album1", "First Album", 
+                                      taylor_albums_summaries$album_name),
+                                      # selected = taylor_albums_summaries[1,1]),
+                          imageOutput("leftalbum")
+                   ),
+                   column(8, plotOutput("barPlot")),
+                   column(2, selectInput(inputId = "album2", "Second Album", choices = taylor_albums_summaries$album_name),
+                          imageOutput("rightalbum")
+                   )
                  )
+        )
           
             )
         )
@@ -147,6 +172,38 @@ server <- function(input, output) {
         geom_point(aes(color = fct_reorder(album_name, album_release))) +
         scale_color_manual(values = all_songs_palette) +
         labs(color = "Album") +
+        theme_bw()
+    })
+    
+    
+    filename1 <- reactive({
+      normalizePath(file.path(
+        "www", paste(str_replace_all(str_replace_all(str_replace_all(input$album1,"\\s","_"),
+                                              "\\(", ""), "\\)", ""), ".jpg", sep="")))
+    })
+    
+    filename2 <- reactive({
+      normalizePath(file.path(
+        "www", 
+        paste(str_replace_all(str_replace_all(str_replace_all(input$album2,"\\s","_"), 
+                                              "\\(", ""), "\\)", ""), ".jpg", sep="")))
+    })
+    
+    filtered_taylor_albums_summaries <- reactive(
+      taylor_albums_summaries %>% filter(album_name == input$album1 | album_name == input$album2)
+    )
+    
+    output$leftalbum <- renderImage({
+      list(src = filename1(), width = "100", height = "100")
+    }, deleteFile = FALSE)
+    
+    output$rightalbum <- renderImage({
+      list(src = filename2(), width = "100", height = "100")
+    }, deleteFile = FALSE)
+    
+    output$barPlot <- renderPlot({
+      ggplot(filtered_taylor_albums_summaries(), aes(fill=album_name, y=value, x=variable_name)) + 
+        geom_bar(position="dodge", stat="identity") +
         theme_bw()
     })
 }
