@@ -125,7 +125,7 @@ ui <- fluidPage(
                                       choices = unique(album_vars$album_name),
                                       multiple = T), 
                                       # selected = colnames(album_vars[2])),
-                          checkboxInput("exclude_tvs", "Exclude Taylor's Versions")),
+                          checkboxInput("exclude_tvs", "Exclude Taylor's Versions", value = F)),
                    plotOutput("albumPlot")
                  ),
         tabPanel("Song Analysis",
@@ -160,12 +160,20 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
+  taylor_album_plot <- reactive({
+    if (input$exclude_tvs == T){
+      return (taylor_album_focus %>% filter(!str_detect(album_name, "Taylor's Version")))
+    }
+    else {
+      return (taylor_album_focus)
+    }
+  })
 
     output$albumPlot <- renderPlot({
-      taylor_album_focus %>%
+      taylor_album_plot() %>%
         ggplot(aes_string(x=input$album_xaxis, y=input$album_yaxis)) +
         geom_point(aes(color = fct_reorder(album_name, album_release)), size = 7) +
-        scale_color_manual(values = ts_colors(unique(taylor_album_focus$album_name))) +
+        scale_color_manual(values = ts_colors(unique(taylor_album_plot()$album_name))) +
         labs(color = "Album") +
         theme_bw()
     })

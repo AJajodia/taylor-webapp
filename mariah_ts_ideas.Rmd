@@ -128,5 +128,8 @@ ts_colors <- function(x) {
 }
 
 ts_colors(unique(taylor_album_focus$album_name))
+
+taylor_album_focus %>% 
+  filter(!str_detect(album_name, "Taylor's Version"))
 ```
 
