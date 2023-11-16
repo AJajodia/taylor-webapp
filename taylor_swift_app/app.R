@@ -44,7 +44,7 @@ taylor_album_focus <- taylor_all_songs %>%
          album_track_number = max(track_number),
          album_metacritic_score = metacritic_score,
          album_user_score = user_score,
-         album_peak_pos = peak_pos,
+         album_peak_position = peak_pos,
          album_weeks_charting = weeks_charting
   ) %>%
   ungroup()
@@ -120,10 +120,10 @@ ui <- fluidPage(
                                       "Y Variable",
                                       choices = colnames(album_vars),
                                       selected = colnames(album_vars)[2]),
-                          selectInput("include_albums",
-                                      "Albums",
-                                      choices = unique(album_vars$album_name),
-                                      multiple = T), 
+                          # selectInput("include_albums",
+                          #             "Albums",
+                          #             choices = unique(album_vars$album_name),
+                          #             multiple = T), 
                                       # selected = colnames(album_vars[2])),
                           checkboxInput("exclude_tvs", "Exclude Taylor's Versions", value = F)),
                    plotOutput("albumPlot")
@@ -142,12 +142,13 @@ ui <- fluidPage(
                  fluidRow(
                    column(2, 
                           selectInput(inputId = "album1", "First Album", 
-                                      taylor_albums_summaries$album_name),
-                                      # selected = taylor_albums_summaries[1,1]),
+                                      choices = taylor_albums_summaries$album_name,
+                                      selected = taylor_albums_summaries[1,1]),
                           imageOutput("leftalbum")
                    ),
                    column(8, plotOutput("barPlot")),
-                   column(2, selectInput(inputId = "album2", "Second Album", choices = taylor_albums_summaries$album_name),
+                   column(2, selectInput(inputId = "album2", "Second Album", 
+                                         choices = taylor_albums_summaries$album_name),
                           imageOutput("rightalbum")
                    )
                  )
@@ -174,7 +175,9 @@ server <- function(input, output) {
         ggplot(aes_string(x=input$album_xaxis, y=input$album_yaxis)) +
         geom_point(aes(color = fct_reorder(album_name, album_release)), size = 7) +
         scale_color_manual(values = ts_colors(unique(taylor_album_plot()$album_name))) +
-        labs(color = "Album") +
+        labs(color = "Album",
+             x = paste(str_to_title(str_replace_all(input$album_xaxis, "_"," "))),
+             y = paste(str_to_title(str_replace_all(input$album_yaxis, "_"," ")))) +
         theme_bw()
     })
     
@@ -183,7 +186,9 @@ server <- function(input, output) {
         ggplot(aes_string(x=input$song_xaxis, y=input$song_yaxis)) +
         geom_point(aes(color = fct_reorder(album_name, album_release))) +
         scale_color_manual(values = ts_colors(unique(taylor_song_focus$album_name))) +
-        labs(color = "Album") +
+        labs(color = "Album",
+             x = paste(str_to_title(str_replace_all(input$song_xaxis, "_"," "))),
+             y = paste(str_to_title(str_replace_all(input$song_yaxis, "_"," ")))) +
         theme_bw()
     })
     
@@ -217,7 +222,9 @@ server <- function(input, output) {
       ggplot(filtered_taylor_albums_summaries(), 
              aes(fill=album_name, y=value, x=variable_name)) + 
         geom_bar(position="dodge", stat="identity") +
-        labs(fill = "Album") +
+        labs(fill = "Album",
+             x = "Album Characteristics",
+             y = "Value") +
         scale_fill_manual(values = ts_colors(unique(filtered_taylor_albums_summaries()$album_name))) +
         theme_bw()
     })

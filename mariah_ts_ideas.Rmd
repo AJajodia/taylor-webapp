@@ -60,11 +60,11 @@ taylor_album_focus <- taylor_all_songs %>%
          album_user_score = user_score,
          album_peak_pos = peak_pos,
          album_weeks_charting = weeks_charting,
-         album_explicit = sum(explicit == "TRUE")
+         album_explicit = sum(explicit, na.rm=TRUE)
          ) %>%
     ungroup()
 
-sum(taylor_all_songs$explicit == "TRUE")
+taylor_all_songs %>% group_by(album_name) %>% count(explicit)
 
 as.integer(as.logical(taylor_all_songs$explicit))
 
@@ -150,5 +150,4 @@ taylor_all_songs %>% ungroup() %>%
   anti_join(stop_words) %>% group_by(year, word) %>% mutate(count = n()) %>%
   distinct()
 ```
-
 
