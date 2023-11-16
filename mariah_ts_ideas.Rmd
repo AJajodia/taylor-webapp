@@ -40,6 +40,7 @@ billboard_songs <- read_csv(
 ```{r wrangling}
 taylor_album_focus <- taylor_all_songs %>%
   full_join(taylor_albums, by = c("album_name", "ep", "album_release")) %>%
+  full_join(explicit_df, by = "album_name") %>%
   inner_join(billboard_albums, by = "album_name") %>%
   filter(!(is.na(album_name))) %>%
   filter(!(album_name %in% c("The Taylor Swift Holiday Collection", "Beautiful Eyes"))) %>%
@@ -60,15 +61,26 @@ taylor_album_focus <- taylor_all_songs %>%
          album_user_score = user_score,
          album_peak_pos = peak_pos,
          album_weeks_charting = weeks_charting,
-         album_explicit = sum(explicit, na.rm=TRUE)
+         album_number_of_explicit_songs = coalesce(album_number_of_explicit_songs, 0)
          ) %>%
     ungroup()
 
-taylor_all_songs %>% group_by(album_name) %>% count(explicit)
+explicit_df <- taylor_all_songs %>% 
+  group_by(album_name) %>% 
+  count(explicit) %>%
+  filter(explicit == TRUE) %>%
+  select(album_name, n)
 
-as.integer(as.logical(taylor_all_songs$explicit))
+colnames(explicit_df)[2] <- 'album_number_of_explicit_songs'
 
-((taylor_all_songs %>% count(explicit)) %>% filter(explicit == "TRUE"))[[2]]
+full_join(taylor_album_focus, explicit_df, by = "album_name")
+
+
+sum(as.integer(as.logical(taylor_all_songs$explicit)), na.rm = T)
+
+(taylor_all_songs %>% count(explicit))
+ 
+   # %>% filter(explicit == TRUE))[[2]]
 
 # (taylor_album_focus %>% group_by(album_name) %>% count(mode_name) %>% slice_max(n, n=1))[[2]]
 ```
@@ -101,12 +113,14 @@ all_album_palette <- c("lightseagreen",
                        "deepskyblue")
 
 
-taylor_album_focus %>%
+p <- taylor_album_focus %>%
   ggplot() +
-  geom_point(aes(x=album_release, y=album_user_score, color = fct_reorder(album_name, album_release)), size = 3) +
+  geom_point(aes(x=album_release, y=album_user_score, color = fct_reorder(album_name, album_release), text = paste("Album Release: ", album_release, "<br>Album User Score: ", album_user_score, "<br><b>Album:</b> ", fct_reorder(album_name, album_release))), size = 3) +
   scale_color_manual(values = all_album_palette) +
   labs(color = "Album",
        y = "User Score")
+
+ggplotly(p, tooltip = "text")
 ```
 
 ```{r}

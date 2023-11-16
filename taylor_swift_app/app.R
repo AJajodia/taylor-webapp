@@ -24,7 +24,17 @@ billboard_albums[9,2] <- "evermore"
 
 billboard_songs <- read_csv("billboard_songs.csv")
 
+explicit_df <- taylor_all_songs %>% 
+  group_by(album_name) %>% 
+  count(explicit) %>%
+  filter(explicit == TRUE) %>%
+  select(album_name, n)
+
+colnames(explicit_df)[2] <- 'album_explicit_songs'
+
+
 taylor_album_focus <- taylor_all_songs %>%
+  full_join(explicit_df, by = "album_name") %>%
   full_join(taylor_albums, by = c("album_name", "ep", "album_release")) %>%
   inner_join(billboard_albums, by = "album_name") %>%
   filter(!(is.na(album_name))) %>%
@@ -45,7 +55,8 @@ taylor_album_focus <- taylor_all_songs %>%
          album_metacritic_score = metacritic_score,
          album_user_score = user_score,
          album_peak_position = peak_pos,
-         album_weeks_charting = weeks_charting
+         album_weeks_charting = weeks_charting,
+         album_explicit_songs = coalesce(album_explicit_songs, 0)
   ) %>%
   ungroup()
 
@@ -126,7 +137,7 @@ ui <- fluidPage(
                           #             multiple = T), 
                                       # selected = colnames(album_vars[2])),
                           checkboxInput("exclude_tvs", "Exclude Taylor's Versions", value = F)),
-                   plotOutput("albumPlot")
+                   plotlyOutput("albumPlot")
                  ),
         tabPanel("Song Analysis",
                           inputPanel(selectInput("song_xaxis",
@@ -136,7 +147,7 @@ ui <- fluidPage(
                                       "Y Variable",
                                       choices = colnames(song_vars),
                                       selected = colnames(song_vars)[2])),
-                   plotOutput("songPlot")
+                   plotlyOutput("songPlot")
                  ),
         tabPanel("Two Album Comparison",
                  fluidRow(
@@ -170,26 +181,36 @@ server <- function(input, output) {
     }
   })
 
-    output$albumPlot <- renderPlot({
-      taylor_album_plot() %>%
+    output$albumPlot <- renderPlotly({
+      p1 <- taylor_album_plot() %>%
         ggplot(aes_string(x=input$album_xaxis, y=input$album_yaxis)) +
-        geom_point(aes(color = fct_reorder(album_name, album_release)), size = 7) +
+        geom_point(aes(color = fct_reorder(album_name, album_release),
+                       text = paste(paste(str_to_title(str_replace_all(input$album_xaxis, "_"," "))),": ", get(req(input$album_xaxis)),
+                                    "<br>", paste(str_to_title(str_replace_all(input$album_yaxis, "_"," "))), ": ", get(req(input$album_yaxis)),
+                                    "<br><b>Album:</b> ", fct_reorder(album_name, album_release))), size = 7) +
         scale_color_manual(values = ts_colors(unique(taylor_album_plot()$album_name))) +
         labs(color = "Album",
              x = paste(str_to_title(str_replace_all(input$album_xaxis, "_"," "))),
              y = paste(str_to_title(str_replace_all(input$album_yaxis, "_"," ")))) +
         theme_bw()
+      
+      ggplotly(p1, tooltip = "text")
     })
     
-    output$songPlot <- renderPlot({
-      taylor_song_focus %>%
+    output$songPlot <- renderPlotly({
+      p2 <- taylor_song_focus %>%
         ggplot(aes_string(x=input$song_xaxis, y=input$song_yaxis)) +
-        geom_point(aes(color = fct_reorder(album_name, album_release))) +
+        geom_point(aes(color = fct_reorder(album_name, album_release),
+                       text = paste(paste(str_to_title(str_replace_all(input$song_xaxis, "_"," "))),": ", get(req(input$song_xaxis)),
+                                    "<br>", paste(str_to_title(str_replace_all(input$song_yaxis, "_"," "))), ": ", get(req(input$song_yaxis)),
+                                    "<br><b>Album:</b> ", fct_reorder(album_name, album_release)))) +
         scale_color_manual(values = ts_colors(unique(taylor_song_focus$album_name))) +
         labs(color = "Album",
              x = paste(str_to_title(str_replace_all(input$song_xaxis, "_"," "))),
              y = paste(str_to_title(str_replace_all(input$song_yaxis, "_"," ")))) +
         theme_bw()
+      
+      ggplotly(p2, tooltip = "text")
     })
     
     
