@@ -150,6 +150,7 @@ ui <- fluidPage(
                    plotlyOutput("songPlot")
                  ),
         tabPanel("Two Album Comparison",
+                 textOutput("tab3text"),
                  fluidRow(
                    column(2, 
                           selectInput(inputId = "album1", "First Album", 
@@ -213,6 +214,14 @@ server <- function(input, output) {
       ggplotly(p2, tooltip = "text")
     })
     
+    output$tab3text <- renderText({
+      "This visualization shows two albums in a direct comparison
+      based on song characteristics pulled from Spotify's API. Though this tool
+      allows for the comparison of any two albums, it highlights differences
+      between Taylor's regular albums and \"Taylor's Version\" re-releases. It
+      also characterizes what a Taylor Swift \"era\" might mean in terms of its
+      unique song qualities and focuses."
+    })
     
     filename1 <- reactive({
       normalizePath(file.path(
