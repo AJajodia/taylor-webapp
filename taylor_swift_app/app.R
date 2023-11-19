@@ -122,7 +122,12 @@ ui <- fluidPage(
 
     # Sidebar with a slider input for number of bins 
     tabsetPanel(
+      tabPanel("Introduction",
+               textOutput("IntroText"),
+               imageOutput("ts_pic")
+               ),
         tabPanel("Album Analysis",
+                 textOutput("tab1text"),
                           inputPanel(selectInput("album_xaxis",
                                       "X Variable",
                                       choices = colnames(album_vars)),
@@ -140,6 +145,7 @@ ui <- fluidPage(
                    plotlyOutput("albumPlot")
                  ),
         tabPanel("Song Analysis",
+                 textOutput("tab2text"),
                           inputPanel(selectInput("song_xaxis",
                                       "X Variable",
                                       choices = colnames(song_vars)),
@@ -173,6 +179,23 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
+  output$IntroText <- renderText({
+    "This app"
+  })
+  
+  output$tab1text <- renderText({
+    "This visualization compares all Taylor Swift albums based on song characteristics from 
+    Spotify's API and charting data scraped from Billboard Music Charts. It is particularly
+    interesting to note how Swift's artistry differs and evolves over her albums.
+    For instance, when comparing the acousticness of her albums and the number of explicit songs 
+    on the album (excluding re-recorded Taylor's Versions) we see Swift's earlier albums are clumped together in the
+    right corner, and her latest non-rerecored albums seperated out, indicating an evoltuion
+    and experimentation in Swift's sound in recent years and indicating how her songwriting has
+    matured. We are also able to look out Swift's popularity and critical acclaim accros her albums.
+    When comparing album release and metacritic score, for instance, we see a clear upward trend in
+    with Swift's latest release receiving the hightest metacritic score."
+  })
+  
   taylor_album_plot <- reactive({
     if (input$exclude_tvs == T){
       return (taylor_album_focus %>% filter(!str_detect(album_name, "Taylor's Version")))
@@ -196,6 +219,19 @@ server <- function(input, output) {
         theme_bw()
       
       ggplotly(p1, tooltip = "text")
+    })
+    
+    
+    output$tab2text <- renderText({
+      "This visualization compares all of Taylor Swift's released songs based on song 
+      characteristics pulled from Spotify's API, colored by the Album or EP the song belong to. 
+      
+      shows two albums in a direct comparison
+      based on song characteristics pulled from Spotify's API. Though this tool
+      allows for the comparison of any two albums, it highlights differences
+      between Taylor's regular albums and \"Taylor's Version\" re-releases. It
+      also characterizes what a Taylor Swift \"era\" might mean in terms of its
+      unique song qualities and focuses."
     })
     
     output$songPlot <- renderPlotly({
