@@ -1,0 +1,12 @@
+name: taylor_swift_app
+title: taylor_swift_app
+username: ajajodia
+account: ajajodia
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10575685
+bundleId: 7946663
+url: https://ajajodia.shinyapps.io/taylor_swift_app/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
